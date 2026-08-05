@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Wallet, Loader2, CreditCard, CheckCircle2, AlertCircle, X, Bitcoin } from "lucide-react";
+import { Wallet, Loader2, CreditCard, CheckCircle2, AlertCircle, X, Bitcoin, QrCode, Copy, Check, RefreshCw, Clock, ExternalLink, ShieldCheck } from "lucide-react";
 import PackageCard from "@/components/dashboard/PackageCard";
 import api from "@/lib/api";
 import { useWallet, updateLocalWalletBalance } from "@/lib/useWallet";
@@ -21,6 +21,15 @@ export interface Plan {
   stock?: string;
 }
 
+const CRYPTO_CURRENCIES = [
+  { id: "usdttrc20", name: "USDT", network: "TRC-20", badge: "Popular" },
+  { id: "btc", name: "BTC", network: "Bitcoin", badge: "" },
+  { id: "eth", name: "ETH", network: "ERC-20", badge: "" },
+  { id: "trx", name: "TRX", network: "TRON", badge: "" },
+  { id: "ltc", name: "LTC", network: "Litecoin", badge: "" },
+  { id: "usdterc20", name: "USDT", network: "ERC-20", badge: "" },
+];
+
 export default function BuyPackagePage() {
   const { balance } = useWallet();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -30,6 +39,7 @@ export default function BuyPackagePage() {
 
   // Payment Options State
   const [paymentMethod, setPaymentMethod] = useState<"wallet" | "gateway" | "nowpayments">("wallet");
+  const [selectedCrypto, setSelectedCrypto] = useState<string>("usdttrc20");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
@@ -39,6 +49,22 @@ export default function BuyPackagePage() {
     txnId: string;
     newBalance: number;
   } | null>(null);
+
+  // NowPayments QR Modal State
+  const [nowPaymentModalOpen, setNowPaymentModalOpen] = useState(false);
+  const [nowPaymentData, setNowPaymentData] = useState<{
+    payment_id: string;
+    pay_address: string;
+    pay_amount: number;
+    pay_currency: string;
+    price_amount: number;
+    price_currency: string;
+    order_id: string;
+    payment_status: string;
+  } | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -81,6 +107,50 @@ export default function BuyPackagePage() {
   const dailyROI = useMemo(() => investment * dailyRate, [investment, dailyRate]);
   const weeklyROI = useMemo(() => investment * weeklyRate, [investment, weeklyRate]);
   const yearlyROI = useMemo(() => dailyROI * 365, [dailyROI]);
+
+  const handleCopy = (text: string, type: "address" | "amount") => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    if (type === "address") {
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
+    } else {
+      setCopiedAmount(true);
+      setTimeout(() => setCopiedAmount(false), 2000);
+    }
+  };
+
+  const handleCheckStatus = async () => {
+    if (!nowPaymentData?.payment_id) return;
+    const nowApiKey = process.env.NEXT_PUBLIC_NOWPAYMENTS_API_KEY;
+    setCheckingStatus(true);
+
+    if (!nowApiKey || nowPaymentData.payment_id.startsWith("DEMO-")) {
+      setTimeout(() => {
+        setCheckingStatus(false);
+      }, 1000);
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://api.nowpayments.io/v1/payment/${nowPaymentData.payment_id}`, {
+        headers: { "x-api-key": nowApiKey },
+      });
+      const data = await res.json();
+      if (data?.payment_status) {
+        setNowPaymentData((prev) => (prev ? { ...prev, payment_status: data.payment_status } : null));
+        if (data.payment_status === "finished" || data.payment_status === "confirmed") {
+          setNowPaymentModalOpen(false);
+          setPurchaseSuccess(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check status", err);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   const handleSelectPlan = (plan: Plan) => {
     setSelectedPlan(plan);
@@ -205,20 +275,38 @@ export default function BuyPackagePage() {
         setPurchaseLoading(false);
       }
     } else if (paymentMethod === "nowpayments") {
-      // ── NowPayments: create invoice and redirect ─────────────────────────────
+      // ── NowPayments: create direct payment address (no redirect) ─────────────
       const nowApiKey = process.env.NEXT_PUBLIC_NOWPAYMENTS_API_KEY;
-
-      if (!nowApiKey) {
-        setPurchaseError("NowPayments API key is not configured. Please contact support.");
-        return;
-      }
-
       const payAmount = investment > 0 ? investment : (selectedPlan.min || 10);
       const orderId = `PKG-${selectedPlan.id}-${Date.now()}`;
 
       setPurchaseLoading(true);
+
+      if (!nowApiKey) {
+        // Dev / Local testing fallback if NEXT_PUBLIC_NOWPAYMENTS_API_KEY is not set
+        const mockAddress = selectedCrypto === "usdttrc20"
+          ? "TYDnyT8Cip2f9AuvLtxBwDqc4fC3wD7n5X"
+          : selectedCrypto === "btc"
+          ? "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+          : "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+
+        setNowPaymentData({
+          payment_id: "DEMO-" + Date.now(),
+          pay_address: mockAddress,
+          pay_amount: selectedCrypto === "btc" ? 0.00185 : payAmount,
+          pay_currency: selectedCrypto,
+          price_amount: payAmount,
+          price_currency: "usd",
+          order_id: orderId,
+          payment_status: "waiting",
+        });
+        setNowPaymentModalOpen(true);
+        setPurchaseLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch("https://api.nowpayments.io/v1/invoice", {
+        const response = await fetch("https://api.nowpayments.io/v1/payment", {
           method: "POST",
           headers: {
             "x-api-key": nowApiKey,
@@ -227,25 +315,33 @@ export default function BuyPackagePage() {
           body: JSON.stringify({
             price_amount: payAmount,
             price_currency: "usd",
+            pay_currency: selectedCrypto,
             order_id: orderId,
             order_description: `${selectedPlan.plan_name} Investment Package`,
-            success_url: `${window.location.origin}/user/packages?payment=success&order_id=${orderId}`,
-            cancel_url: `${window.location.origin}/user/packages?payment=cancelled`,
           }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-          setPurchaseError(data?.message || "Failed to create NowPayments invoice. Please try again.");
+          setPurchaseError(data?.message || "Failed to create NowPayments payment address. Please try again.");
           return;
         }
 
-        if (data?.invoice_url) {
-          // Redirect user to the NowPayments hosted checkout
-          window.location.href = data.invoice_url;
+        if (data?.pay_address) {
+          setNowPaymentData({
+            payment_id: data.payment_id?.toString() || orderId,
+            pay_address: data.pay_address,
+            pay_amount: Number(data.pay_amount) || payAmount,
+            pay_currency: data.pay_currency || selectedCrypto,
+            price_amount: Number(data.price_amount) || payAmount,
+            price_currency: data.price_currency || "usd",
+            order_id: data.order_id || orderId,
+            payment_status: data.payment_status || "waiting",
+          });
+          setNowPaymentModalOpen(true);
         } else {
-          setPurchaseError("Could not retrieve payment URL. Please try again.");
+          setPurchaseError("Could not retrieve payment address. Please try again.");
         }
       } catch {
         setPurchaseError("Network error while connecting to NowPayments. Please try again.");
@@ -320,6 +416,136 @@ export default function BuyPackagePage() {
                 className="mt-6 h-12 w-full rounded-2xl bg-gradient-to-r from-[#6F7DFF] to-[#8F78FF] font-medium text-white shadow-lg transition hover:-translate-y-0.5"
               >
                 Close & Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NowPayments QR Code & Deposit Address Modal */}
+      {nowPaymentModalOpen && nowPaymentData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[32px] border border-[#F7931A]/40 bg-[#141632] p-6 sm:p-8 shadow-2xl my-8">
+            {/* Close button */}
+            <button
+              onClick={() => setNowPaymentModalOpen(false)}
+              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header */}
+            <div className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7931A]/20 border border-[#F7931A]/40 text-[#F7931A]">
+                <QrCode className="h-7 w-7" />
+              </div>
+              <h2 className="mt-4 text-2xl font-light text-white">
+                Pay with {nowPaymentData.pay_currency.toUpperCase()}
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">
+                Scan the QR code or copy the address below using your crypto wallet app.
+              </p>
+            </div>
+
+            {/* Package Summary */}
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">Package Selected:</span>
+                <span className="font-semibold text-white">{selectedPlan?.plan_name} (${nowPaymentData.price_amount} USD)</span>
+              </div>
+              <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                <span className="text-slate-400">Order ID:</span>
+                <span className="font-mono text-[11px] text-slate-300">{nowPaymentData.order_id}</span>
+              </div>
+            </div>
+
+            {/* QR Code Container */}
+            <div className="mt-5 flex flex-col items-center justify-center">
+              <div className="relative p-3.5 rounded-2xl bg-white shadow-xl border border-white/20">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(nowPaymentData.pay_address)}`}
+                  alt="Payment Address QR Code"
+                  className="h-48 w-48 sm:h-52 sm:w-52 rounded-lg object-contain"
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-[#F7931A] font-medium">
+                <QrCode className="h-3.5 w-3.5" />
+                <span>Scan QR code with your crypto wallet</span>
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="mt-6 space-y-4">
+              {/* Exact Amount Field */}
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Exact Amount to Send
+                </label>
+                <div className="flex items-center gap-2 rounded-2xl border border-[#F7931A]/30 bg-[#11132B] p-3 text-white">
+                  <div className="flex-1 font-mono text-sm font-semibold text-[#F7931A] truncate">
+                    {nowPaymentData.pay_amount} {nowPaymentData.pay_currency.toUpperCase()}
+                  </div>
+                  <button
+                    onClick={() => handleCopy(nowPaymentData.pay_amount.toString(), "amount")}
+                    className="flex items-center gap-1 rounded-xl bg-[#F7931A]/20 px-3 py-1.5 text-xs font-medium text-[#F7931A] hover:bg-[#F7931A]/30 transition shrink-0"
+                  >
+                    {copiedAmount ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedAmount ? "Copied" : "Copy Amount"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Deposit Address Field */}
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">
+                  Deposit Address ({nowPaymentData.pay_currency.toUpperCase()})
+                </label>
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#11132B] p-3 text-white">
+                  <div className="flex-1 font-mono text-xs text-slate-200 break-all select-all">
+                    {nowPaymentData.pay_address}
+                  </div>
+                  <button
+                    onClick={() => handleCopy(nowPaymentData.pay_address, "address")}
+                    className="flex items-center gap-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition shrink-0"
+                  >
+                    {copiedAddress ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedAddress ? "Copied" : "Copy Address"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Warning Alert */}
+            <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-200/90">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+              <span>
+                Send only <strong>{nowPaymentData.pay_currency.toUpperCase()}</strong> to this deposit address. Ensure you send the exact amount to prevent payment processing delays.
+              </span>
+            </div>
+
+            {/* Status Footer & Actions */}
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 pt-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Status:</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-300 capitalize">
+                  <Clock className="h-3 w-3 animate-pulse" />
+                  {nowPaymentData.payment_status}
+                </span>
+                <button
+                  onClick={handleCheckStatus}
+                  disabled={checkingStatus}
+                  title="Check Payment Status"
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${checkingStatus ? "animate-spin text-[#F7931A]" : ""}`} />
+                </button>
+              </div>
+
+              <button
+                onClick={() => setNowPaymentModalOpen(false)}
+                className="h-11 w-full sm:w-auto px-6 rounded-2xl bg-gradient-to-r from-[#F7931A] to-[#FFAB40] font-medium text-white shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Done / Close
               </button>
             </div>
           </div>
@@ -449,6 +675,33 @@ export default function BuyPackagePage() {
                     )}
                   </button>
 
+                  {/* Coin Sub-selector for NowPayments */}
+                  {paymentMethod === "nowpayments" && (
+                    <div className="mt-1 p-3 rounded-2xl border border-[#F7931A]/30 bg-[#F7931A]/5 space-y-2">
+                      <div className="text-[11px] font-semibold text-[#F7931A] uppercase tracking-wider flex items-center justify-between">
+                        <span>Select Crypto Coin</span>
+                        <span className="text-[10px] text-slate-400">Direct Deposit Address</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {CRYPTO_CURRENCIES.map((coin) => (
+                          <button
+                            key={coin.id}
+                            type="button"
+                            onClick={() => setSelectedCrypto(coin.id)}
+                            className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs transition-all ${
+                              selectedCrypto === coin.id
+                                ? "border-[#F7931A] bg-[#F7931A]/25 text-white font-medium shadow-md"
+                                : "border-white/10 bg-[#11132B]/60 text-slate-400 hover:border-slate-500"
+                            }`}
+                          >
+                            <span className="font-semibold">{coin.name}</span>
+                            <span className="text-[10px] opacity-75">{coin.network}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Option 3: Other Payment Method */}
                   <button
                     type="button"
@@ -495,12 +748,12 @@ export default function BuyPackagePage() {
                   {purchaseLoading ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin text-white" />
-                      {paymentMethod === "nowpayments" ? "Creating Invoice..." : "Processing Purchase..."}
+                      {paymentMethod === "nowpayments" ? "Generating Address & QR..." : "Processing Purchase..."}
                     </>
                   ) : paymentMethod === "nowpayments" ? (
                     <>
-                      <Bitcoin className="h-5 w-5" />
-                      Pay with Crypto (NowPayments)
+                      <QrCode className="h-5 w-5" />
+                      Generate Payment Address &amp; QR Code
                     </>
                   ) : (
                     <>
