@@ -22,12 +22,9 @@ export interface Plan {
 }
 
 const CRYPTO_CURRENCIES = [
-  { id: "usdttrc20", name: "USDT", network: "TRC-20", badge: "Popular" },
-  { id: "btc", name: "BTC", network: "Bitcoin", badge: "" },
-  { id: "eth", name: "ETH", network: "ERC-20", badge: "" },
-  { id: "trx", name: "TRX", network: "TRON", badge: "" },
-  { id: "ltc", name: "LTC", network: "Litecoin", badge: "" },
-  { id: "usdterc20", name: "USDT", network: "ERC-20", badge: "" },
+  { id: "USDTRC20", name: "USDT", network: "TRC20", label: "USDT TRC20" },
+  { id: "USDTBSC", name: "USDT", network: "BEP20", label: "USDT BEP20" },
+  { id: "USDTSOL", name: "USDT", network: "SOL", label: "USDT SOL" },
 ];
 
 export default function BuyPackagePage() {
@@ -39,7 +36,7 @@ export default function BuyPackagePage() {
 
   // Payment Options State
   const [paymentMethod, setPaymentMethod] = useState<"wallet" | "gateway" | "nowpayments">("wallet");
-  const [selectedCrypto, setSelectedCrypto] = useState<string>("usdttrc20");
+  const [selectedCrypto, setSelectedCrypto] = useState<string>("USDTRC20");
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
@@ -129,7 +126,7 @@ export default function BuyPackagePage() {
     if (!nowApiKey || nowPaymentData.payment_id.startsWith("DEMO-")) {
       setTimeout(() => {
         setCheckingStatus(false);
-      }, 1000);
+      }, 800);
       return;
     }
 
@@ -141,6 +138,29 @@ export default function BuyPackagePage() {
       if (data?.payment_status) {
         setNowPaymentData((prev) => (prev ? { ...prev, payment_status: data.payment_status } : null));
         if (data.payment_status === "finished" || data.payment_status === "confirmed") {
+          const txnId = nowPaymentData.payment_id;
+          const pName = selectedPlan?.plan_name || "Investment Package";
+          const pAmount = nowPaymentData.price_amount;
+
+          if (typeof window !== "undefined") {
+            const existing = JSON.parse(localStorage.getItem("purchased_orders") || "[]");
+            existing.unshift({
+              id: txnId,
+              plan: pName,
+              amount: `$${pAmount.toLocaleString()}`,
+              status: "Active",
+              date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+              trans_id: txnId
+            });
+            localStorage.setItem("purchased_orders", JSON.stringify(existing));
+          }
+
+          setPurchaseDetails({
+            planName: pName,
+            amount: pAmount,
+            txnId: txnId,
+            newBalance: balance,
+          });
           setNowPaymentModalOpen(false);
           setPurchaseSuccess(true);
         }
@@ -151,6 +171,47 @@ export default function BuyPackagePage() {
       setCheckingStatus(false);
     }
   };
+
+  // Helper for testing: Simulate payment success in demo mode
+  const handleSimulateDemoPayment = () => {
+    if (!nowPaymentData) return;
+    const txnId = nowPaymentData.payment_id;
+    const pName = selectedPlan?.plan_name || "Investment Package";
+    const pAmount = nowPaymentData.price_amount;
+
+    if (typeof window !== "undefined") {
+      const existing = JSON.parse(localStorage.getItem("purchased_orders") || "[]");
+      existing.unshift({
+        id: txnId,
+        plan: pName,
+        amount: `$${pAmount.toLocaleString()}`,
+        status: "Active",
+        date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        trans_id: txnId
+      });
+      localStorage.setItem("purchased_orders", JSON.stringify(existing));
+    }
+
+    setPurchaseDetails({
+      planName: pName,
+      amount: pAmount,
+      txnId: txnId,
+      newBalance: balance,
+    });
+    setNowPaymentModalOpen(false);
+    setPurchaseSuccess(true);
+  };
+
+  // Auto-poll payment status every 10 seconds while modal is open
+  useEffect(() => {
+    if (!nowPaymentModalOpen || !nowPaymentData?.payment_id) return;
+
+    const interval = setInterval(() => {
+      handleCheckStatus();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [nowPaymentModalOpen, nowPaymentData?.payment_id]);
 
   const handleSelectPlan = (plan: Plan) => {
     setSelectedPlan(plan);
@@ -284,16 +345,16 @@ export default function BuyPackagePage() {
 
       if (!nowApiKey) {
         // Dev / Local testing fallback if NEXT_PUBLIC_NOWPAYMENTS_API_KEY is not set
-        const mockAddress = selectedCrypto === "usdttrc20"
+        const mockAddress = selectedCrypto === "USDTRC20"
           ? "TYDnyT8Cip2f9AuvLtxBwDqc4fC3wD7n5X"
-          : selectedCrypto === "btc"
-          ? "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
-          : "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+          : selectedCrypto === "USDTBSC"
+          ? "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
+          : "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU";
 
         setNowPaymentData({
           payment_id: "DEMO-" + Date.now(),
           pay_address: mockAddress,
-          pay_amount: selectedCrypto === "btc" ? 0.00185 : payAmount,
+          pay_amount: payAmount,
           pay_currency: selectedCrypto,
           price_amount: payAmount,
           price_currency: "usd",
@@ -541,12 +602,22 @@ export default function BuyPackagePage() {
                 </button>
               </div>
 
-              <button
-                onClick={() => setNowPaymentModalOpen(false)}
-                className="h-11 w-full sm:w-auto px-6 rounded-2xl bg-gradient-to-r from-[#F7931A] to-[#FFAB40] font-medium text-white shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Done / Close
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {nowPaymentData.payment_id.startsWith("DEMO-") && (
+                  <button
+                    onClick={handleSimulateDemoPayment}
+                    className="h-11 px-4 rounded-2xl border border-[#F7931A]/40 bg-[#F7931A]/20 text-xs font-medium text-[#F7931A] hover:bg-[#F7931A]/30 transition shrink-0"
+                  >
+                    Simulate Paid (Demo)
+                  </button>
+                )}
+                <button
+                  onClick={() => setNowPaymentModalOpen(false)}
+                  className="h-11 w-full sm:w-auto px-6 rounded-2xl bg-gradient-to-r from-[#F7931A] to-[#FFAB40] font-medium text-white shadow-lg transition hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Done / Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
