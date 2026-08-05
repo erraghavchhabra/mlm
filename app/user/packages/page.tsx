@@ -207,6 +207,7 @@ export default function BuyPackagePage() {
     } else if (paymentMethod === "nowpayments") {
       // ── NowPayments: create invoice and redirect ─────────────────────────────
       const nowApiKey = process.env.NEXT_PUBLIC_NOWPAYMENTS_API_KEY;
+
       if (!nowApiKey) {
         setPurchaseError("NowPayments API key is not configured. Please contact support.");
         return;
@@ -398,15 +399,13 @@ export default function BuyPackagePage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("wallet")}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                      paymentMethod === "wallet"
-                        ? "border-[#6F7DFF] bg-[#6F7DFF]/20 text-white shadow-lg"
-                        : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-slate-500"
-                    }`}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${paymentMethod === "wallet"
+                      ? "border-[#6F7DFF] bg-[#6F7DFF]/20 text-white shadow-lg"
+                      : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-slate-500"
+                      }`}
                   >
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                      paymentMethod === "wallet" ? "bg-[#6F7DFF]/30" : "bg-[#2B3164]"
-                    }`}>
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "wallet" ? "bg-[#6F7DFF]/30" : "bg-[#2B3164]"
+                      }`}>
                       <Wallet className="h-4 w-4 text-[#8D98FF]" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -424,18 +423,15 @@ export default function BuyPackagePage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("nowpayments")}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                      paymentMethod === "nowpayments"
-                        ? "border-[#F7931A] bg-[#F7931A]/15 text-white shadow-lg"
-                        : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-[#F7931A]/40"
-                    }`}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${paymentMethod === "nowpayments"
+                      ? "border-[#F7931A] bg-[#F7931A]/15 text-white shadow-lg"
+                      : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-[#F7931A]/40"
+                      }`}
                   >
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                      paymentMethod === "nowpayments" ? "bg-[#F7931A]/25" : "bg-[#2B3164]"
-                    }`}>
-                      <Bitcoin className={`h-4 w-4 ${
-                        paymentMethod === "nowpayments" ? "text-[#F7931A]" : "text-slate-400"
-                      }`} />
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "nowpayments" ? "bg-[#F7931A]/25" : "bg-[#2B3164]"
+                      }`}>
+                      <Bitcoin className={`h-4 w-4 ${paymentMethod === "nowpayments" ? "text-[#F7931A]" : "text-slate-400"
+                        }`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm flex items-center gap-2">
@@ -457,15 +453,13 @@ export default function BuyPackagePage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("gateway")}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
-                      paymentMethod === "gateway"
-                        ? "border-[#6F7DFF] bg-[#6F7DFF]/20 text-white shadow-lg"
-                        : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-slate-500"
-                    }`}
+                    className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${paymentMethod === "gateway"
+                      ? "border-[#6F7DFF] bg-[#6F7DFF]/20 text-white shadow-lg"
+                      : "border-[#2B3164] bg-[#11132B]/50 text-slate-400 hover:border-slate-500"
+                      }`}
                   >
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                      paymentMethod === "gateway" ? "bg-[#6F7DFF]/30" : "bg-[#2B3164]"
-                    }`}>
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${paymentMethod === "gateway" ? "bg-[#6F7DFF]/30" : "bg-[#2B3164]"
+                      }`}>
                       <CreditCard className="h-4 w-4 text-slate-400" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -493,11 +487,10 @@ export default function BuyPackagePage() {
                   type="button"
                   onClick={handlePurchase}
                   disabled={purchaseLoading}
-                  className={`flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-medium text-white transition hover:-translate-y-1 disabled:opacity-60 ${
-                    paymentMethod === "nowpayments"
-                      ? "bg-gradient-to-r from-[#F7931A] to-[#FFAB40] hover:shadow-[0_10px_25px_rgba(247,147,26,.35)]"
-                      : "bg-gradient-to-r from-[#6F7DFF] to-[#8F78FF] hover:shadow-[0_10px_25px_rgba(111,125,255,.35)]"
-                  }`}
+                  className={`flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-medium text-white transition hover:-translate-y-1 disabled:opacity-60 ${paymentMethod === "nowpayments"
+                    ? "bg-gradient-to-r from-[#F7931A] to-[#FFAB40] hover:shadow-[0_10px_25px_rgba(247,147,26,.35)]"
+                    : "bg-gradient-to-r from-[#6F7DFF] to-[#8F78FF] hover:shadow-[0_10px_25px_rgba(111,125,255,.35)]"
+                    }`}
                 >
                   {purchaseLoading ? (
                     <>
