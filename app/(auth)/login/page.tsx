@@ -6,7 +6,7 @@ import LoginForm from "@/components/auth/LoginForm";
 export default function LoginPage() {
   return (
     <AuthLayout
-      title="Sign In2"
+      title="Sign In"
       subtitle="Welcome back! Please enter your credentials to continue."
     >
       <LoginForm />
