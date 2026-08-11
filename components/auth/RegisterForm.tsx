@@ -13,6 +13,8 @@ import {
   Globe,
   UserCheck,
   Compass,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
 
 import { useForm } from "react-hook-form";
@@ -20,7 +22,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 
-import AuthInput from "./AuthInput";
 import api from "@/lib/api";
 
 const schema = z
@@ -61,9 +62,10 @@ export default function RegisterForm({
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
+    register,
+    handleSubmit,
     watch,
     setValue,
-    handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -95,7 +97,6 @@ export default function RegisterForm({
     setServerError(null);
 
     try {
-      // Send payload matching Laravel register(Request $request) controller
       const res = await api.post("/register", {
         username: data.username,
         full_name: data.full_name,
@@ -148,196 +149,267 @@ export default function RegisterForm({
   };
 
   return (
-    <motion.form
-      onSubmit={handleSubmit(onSubmit)}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-4"
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="group relative rounded-3xl bg-[#0b0e26]/60 border border-[#2d356b]/80 p-6 sm:p-10 shadow-2xl backdrop-blur-xl overflow-hidden max-w-2xl mx-auto"
     >
-      {serverError && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {serverError}
+      {/* Inner Radial Glow on Hover */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#6E5CFF]/20 rounded-full blur-3xl group-hover:bg-[#6E5CFF]/40 transition-colors duration-500 pointer-events-none" />
+
+      {/* Header Badge & Title */}
+      <div className="text-center space-y-3 mb-8 relative z-10">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#6E5CFF]/30 bg-[#6E5CFF]/10 backdrop-blur-md">
+          <Sparkles className="w-4 h-4 text-[#8B94FF]" />
+          <span className="font-mono text-xs font-medium text-[#D1D5FF] tracking-wider uppercase">
+            Protocol Onboarding
+          </span>
         </div>
-      )}
 
-      {/* Sponsor Code */}
-      <AuthInput
-        label={isLocked ? "Sponsor Code (ucode - Locked)" : "Sponsor Code (ucode)"}
-        icon={UserCheck}
-        value={watch("sponsor")}
-        onChange={(e) => !isLocked && setValue("sponsor", e.target.value)}
-        error={errors.sponsor?.message}
-        placeholder="Enter sponsor code (e.g. QB100001)"
-        readOnly={isLocked}
-        disabled={isLocked}
-        required
-      />
+        <h2 className="font-tech text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          Create Account
+        </h2>
 
-      {/* Position Selection */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium tracking-wide text-slate-300">
-          Placement Position {isLocked && <span className="text-xs text-[#8D98FF] font-normal">(Locked by Referral Link)</span>} <span className="text-red-400">*</span>
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            disabled={isLocked}
-            onClick={() => !isLocked && setValue("position", "L")}
-            className={`flex h-12 items-center justify-center gap-2 rounded-2xl border text-sm font-medium transition-all ${
-              currentPosition === "L"
-                ? "border-[#6E57FF] bg-[#6E57FF]/25 text-white shadow-lg"
-                : "border-[#2B3164] bg-[#101226] text-slate-400 hover:border-slate-500"
-            } ${isLocked ? "cursor-not-allowed opacity-80" : ""}`}
-          >
-            <Compass className="h-4 w-4" />
-            Left Position (L)
-          </button>
-
-          <button
-            type="button"
-            disabled={isLocked}
-            onClick={() => !isLocked && setValue("position", "R")}
-            className={`flex h-12 items-center justify-center gap-2 rounded-2xl border text-sm font-medium transition-all ${
-              currentPosition === "R"
-                ? "border-[#6E57FF] bg-[#6E57FF]/25 text-white shadow-lg"
-                : "border-[#2B3164] bg-[#101226] text-slate-400 hover:border-slate-500"
-            } ${isLocked ? "cursor-not-allowed opacity-80" : ""}`}
-          >
-            <Compass className="h-4 w-4" />
-            Right Position (R)
-          </button>
-        </div>
-        {errors.position && (
-          <p className="text-xs text-red-400">{errors.position.message}</p>
-        )}
+        <p className="font-sans text-xs sm:text-sm text-[#A6ABC9]">
+          Register your identity to join the autonomous node network.
+        </p>
       </div>
 
-      {/* Username */}
-      <AuthInput
-        label="Username"
-        icon={User}
-        value={watch("username")}
-        onChange={(e) => setValue("username", e.target.value)}
-        error={errors.username?.message}
-        placeholder="Enter username (max 15 chars)"
-        required
-      />
-
-      {/* Full Name */}
-      <AuthInput
-        label="Full Name"
-        icon={User}
-        value={watch("full_name")}
-        onChange={(e) => setValue("full_name", e.target.value)}
-        error={errors.full_name?.message}
-        placeholder="Enter full name"
-        required
-      />
-
-      {/* Email Address */}
-      <AuthInput
-        label="Email Address"
-        icon={Mail}
-        type="email"
-        value={watch("email")}
-        onChange={(e) => setValue("email", e.target.value)}
-        error={errors.email?.message}
-        placeholder="name@example.com"
-        required
-      />
-
-      {/* Mobile Number */}
-      <AuthInput
-        label="Mobile Number"
-        icon={Phone}
-        type="tel"
-        value={watch("mobile")}
-        onChange={(e) => setValue("mobile", e.target.value)}
-        error={errors.mobile?.message}
-        placeholder="+91 9876543210"
-        required
-      />
-
-      {/* Country */}
-      <AuthInput
-        label="Country"
-        icon={Globe}
-        value={watch("country")}
-        onChange={(e) => setValue("country", e.target.value)}
-        error={errors.country?.message}
-        placeholder="Enter your country"
-        required
-      />
-
-      {/* Password */}
-      <AuthInput
-        label="Password"
-        icon={Lock}
-        type="password"
-        value={watch("password")}
-        onChange={(e) => setValue("password", e.target.value)}
-        error={errors.password?.message}
-        placeholder="Create password (min 6 chars)"
-        required
-      />
-
-      {/* Confirm Password */}
-      <AuthInput
-        label="Confirm Password"
-        icon={Lock}
-        type="password"
-        value={watch("confirmPassword")}
-        onChange={(e) => setValue("confirmPassword", e.target.value)}
-        error={errors.confirmPassword?.message}
-        placeholder="Confirm password"
-        required
-      />
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="
-        group
-        mt-2
-        flex
-        h-14
-        w-full
-        items-center
-        justify-center
-        gap-3
-        rounded-2xl
-        bg-gradient-to-r
-        from-[#6E57FF]
-        to-[#8B7DFF]
-        font-medium
-        text-white
-        transition-all
-        duration-300
-        hover:-translate-y-1
-        hover:shadow-lg
-        hover:shadow-[#6E57FF]/40
-        disabled:opacity-60
-      "
-      >
-        {isSubmitting ? (
-          "Registering Account..."
-        ) : (
-          <>
-            Create Account
-            <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
-          </>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
+        {/* Error Alert */}
+        {serverError && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+            <span>{serverError}</span>
+          </div>
         )}
-      </button>
 
-      <p className="pt-2 text-center text-sm text-slate-400">
-        Already have an account?
-        <Link
-          href="/login"
-          className="ml-2 font-medium text-[#8B7DFF] hover:text-white"
+        {/* 1. Sponsor Code */}
+        <div className="space-y-2">
+          <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+            {isLocked ? "Sponsor Code (ucode - Locked)" : "Sponsor Code (ucode)"} <span className="text-red-400">*</span>
+          </label>
+          <div className="relative">
+            <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+            <input
+              {...register("sponsor")}
+              type="text"
+              readOnly={isLocked}
+              disabled={isLocked}
+              placeholder="e.g. QB100001"
+              className={`w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm ${
+                isLocked ? "opacity-70 cursor-not-allowed bg-[#12163b]/40" : ""
+              }`}
+            />
+          </div>
+          {errors.sponsor && (
+            <p className="font-mono text-[10px] text-red-400 mt-1">{errors.sponsor.message}</p>
+          )}
+        </div>
+
+        {/* 2. Position Selection */}
+        <div className="space-y-2">
+          <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+            Placement Position {isLocked && <span className="text-[10px] text-[#8B94FF] lowercase font-normal">(Locked by Referral)</span>} <span className="text-red-400">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              disabled={isLocked}
+              onClick={() => !isLocked && setValue("position", "L")}
+              className={`flex h-12 items-center justify-center gap-2 rounded-xl border font-mono text-xs uppercase tracking-wider transition-all ${
+                currentPosition === "L"
+                  ? "border-[#6E5CFF] bg-[#6E5CFF]/20 text-white shadow-[0_0_15px_rgba(110,92,255,0.25)] font-bold"
+                  : "border-[#2d356b] bg-[#12163b]/70 text-[#A6ABC9] hover:border-[#6E5CFF]/50 hover:text-white"
+              } ${isLocked ? "cursor-not-allowed opacity-80" : ""}`}
+            >
+              <Compass className="h-4 w-4 text-[#8B94FF]" />
+              Left Position (L)
+            </button>
+
+            <button
+              type="button"
+              disabled={isLocked}
+              onClick={() => !isLocked && setValue("position", "R")}
+              className={`flex h-12 items-center justify-center gap-2 rounded-xl border font-mono text-xs uppercase tracking-wider transition-all ${
+                currentPosition === "R"
+                  ? "border-[#6E5CFF] bg-[#6E5CFF]/20 text-white shadow-[0_0_15px_rgba(110,92,255,0.25)] font-bold"
+                  : "border-[#2d356b] bg-[#12163b]/70 text-[#A6ABC9] hover:border-[#6E5CFF]/50 hover:text-white"
+              } ${isLocked ? "cursor-not-allowed opacity-80" : ""}`}
+            >
+              <Compass className="h-4 w-4 text-[#8B94FF]" />
+              Right Position (R)
+            </button>
+          </div>
+          {errors.position && (
+            <p className="font-mono text-[10px] text-red-400 mt-1">{errors.position.message}</p>
+          )}
+        </div>
+
+        {/* 3. Grid for Username & Full Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Username <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("username")}
+                type="text"
+                placeholder="satoshi123"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.username && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.username.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Full Name <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("full_name")}
+                type="text"
+                placeholder="Satoshi Nakamoto"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.full_name && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.full_name.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* 4. Grid for Email & Mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Email Address <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("email")}
+                type="email"
+                placeholder="name@example.com"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.email && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Mobile Number <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("mobile")}
+                type="tel"
+                placeholder="+91 9876543210"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.mobile && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.mobile.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* 5. Country */}
+        <div className="space-y-2">
+          <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+            Country <span className="text-red-400">*</span>
+          </label>
+          <div className="relative">
+            <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+            <input
+              {...register("country")}
+              type="text"
+              placeholder="Enter your country"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+            />
+          </div>
+          {errors.country && (
+            <p className="font-mono text-[10px] text-red-400 mt-1">{errors.country.message}</p>
+          )}
+        </div>
+
+        {/* 6. Grid for Password & Confirm Password */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Password <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("password")}
+                type="password"
+                placeholder="••••••••"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.password && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+              Confirm Password <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+              <input
+                {...register("confirmPassword")}
+                type="password"
+                placeholder="••••••••"
+                className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="font-mono text-[10px] text-red-400 mt-1">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-4 mt-2 rounded-xl bg-gradient-to-r from-[#5D72FF] to-[#6E5CFF] text-white font-mono text-xs font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(110,92,255,0.4)] hover:shadow-[0_0_30px_rgba(110,92,255,0.7)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 group/btn"
         >
-          Sign In
-        </Link>
-      </p>
-    </motion.form>
+          {isSubmitting ? (
+            <span>Registering Account...</span>
+          ) : (
+            <>
+              <span>Create Account</span>
+              <ArrowRight className="w-4 h-4 text-white group-hover/btn:translate-x-1 transition-transform" />
+            </>
+          )}
+        </button>
+
+        {/* Sign In Link */}
+        <p className="pt-2 text-center font-sans text-xs text-[#A6ABC9]">
+          Already have an account?
+          <Link
+            href="/login"
+            className="ml-2 font-mono font-medium text-[#8B94FF] hover:text-white transition-colors"
+          >
+            Sign In
+          </Link>
+        </p>
+      </form>
+    </motion.div>
   );
 }

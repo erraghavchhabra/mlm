@@ -1,27 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
 @import "tailwindcss";
 
-@theme inline {
+@theme {
+  /* Theme Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-primary: var(--primary);
   --color-sidebar: var(--sidebar);
   --color-card: var(--card);
   --color-border: var(--border);
   --color-muted: var(--muted);
 
-  --font-sans: var(--font-manrope);
+  /* Modern AI & Tech Fonts (Tailwind v4 creates font-tech, font-mono-tech, font-sans-ui automatically!) */
+  --font-tech: 'Space Grotesk', sans-serif;
+  --font-mono-tech: 'JetBrains Mono', monospace;
+  --font-sans-ui: 'Plus Jakarta Sans', sans-serif;
 }
 
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-
   --primary: #2563eb;
-
   --sidebar: #ffffff;
   --card: #ffffff;
-
   --border: #e5e7eb;
   --muted: #64748b;
 }
@@ -29,12 +30,9 @@
 .dark {
   --background: #020617;
   --foreground: #f8fafc;
-
   --primary: #3b82f6;
-
   --sidebar: #0f172a;
   --card: #111827;
-
   --border: #1e293b;
   --muted: #94a3b8;
 }
@@ -42,7 +40,28 @@
 * {
   box-sizing: border-box;
 }
+html {
+  overflow-y: scroll;
+}
 
+/* Custom sleek AI scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070914;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2b3164;
+  border-radius: 9999px;
+  border: 2px solid #070914;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6e5cff;
+}
 html,
 body {
   width: 100%;
@@ -53,13 +72,16 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans-ui); /* Default body font */
   transition:
     background-color .25s ease,
     color .25s ease;
 }
+
 .bg-lime-50 {
-      background-color: #3b488d;
+  background-color: #3b488d;
 }
+
 button {
   cursor: pointer;
 }
@@ -76,6 +98,7 @@ button {
 .dark ::-webkit-scrollbar-thumb {
   background: #334155;
 }
+
 /* Hide scrollbar */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -85,7 +108,12 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-@media (min-width:1024px){
-  aside{
-    transform:translateX(0)!important;
-  }}
+.m-canvas{
+  max-width: 100%
+}
+@media (min-width: 1024px) {
+  aside {
+    transform: translateX(0) !important;
+  }
+}
+

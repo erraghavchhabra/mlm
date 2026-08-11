@@ -9,8 +9,7 @@ import CTASection from "@/components/front/home/CTASection";
 export default function Home() {
   return (
     <PageEntrance>
-
-      <div className="min-h-screen w-full bg-[radial-gradient(circle_at_center,#17113b_0%,#0b1026_45%,#070914_100%)] text-white overflow-hidden relative selection:bg-[#6E5CFF] selection:text-white">
+      <div className="">
         {/* Background Ambient Glows */}
         <div className="gsap-reveal-target gsap-bg-glow absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-[#6E5CFF]/15 blur-[120px] pointer-events-none rounded-full scale-75" />
         <div className="gsap-reveal-target gsap-bg-glow absolute bottom-10 right-10 w-[500px] h-[500px] bg-[#2B3164]/30 blur-[150px] pointer-events-none rounded-full scale-75" />

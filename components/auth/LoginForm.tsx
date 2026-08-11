@@ -4,13 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 
-import AuthInput from "./AuthInput";
 import api from "@/lib/api";
 
 const schema = z.object({
@@ -28,8 +27,6 @@ export default function LoginForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
-    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -58,14 +55,13 @@ export default function LoginForm() {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Redirect to dashboard (adjust as needed)
+      // Redirect to dashboard
       router.push("/user/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 401) {
           setServerError(err.response.data?.message || "Invalid credentials");
         } else if (err.response?.status === 422) {
-          // Laravel validation errors
           const validationErrors = err.response.data?.errors;
           const firstError = validationErrors
             ? (Object.values(validationErrors)[0] as string[])[0]
@@ -81,105 +77,154 @@ export default function LoginForm() {
   };
 
   return (
-    <motion.form
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6"
+      className="group relative rounded-3xl bg-[#0b0e26]/60 border border-[#2d356b]/80 p-6 sm:p-10 shadow-2xl backdrop-blur-xl overflow-hidden max-w-lg mx-auto"
     >
-      {serverError && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {serverError}
+      {/* Inner Radial Glow on Hover */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#6E5CFF]/20 rounded-full blur-3xl group-hover:bg-[#6E5CFF]/40 transition-colors duration-500 pointer-events-none" />
+
+      {/* Header Badge & Title */}
+      <div className="text-center space-y-3 mb-8 relative z-10">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#6E5CFF]/30 bg-[#6E5CFF]/10 backdrop-blur-md">
+          <Sparkles className="w-4 h-4 text-[#8B94FF]" />
+          <span className="font-mono text-xs font-medium text-[#D1D5FF] tracking-wider uppercase">
+          Sign In
+          </span>
         </div>
-      )}
 
-      {/* Email */}
-      <AuthInput
-        label="Email Address"
-        icon={Mail}
-        type="email"
-        placeholder="Enter your email"
-        value={watch("email")}
-        onChange={(e) => setValue("email", e.target.value)}
-        error={errors.email?.message}
-      />
+        <h2 className="font-tech text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          Welcome Back
+        </h2>
 
-      {/* Password */}
-      <AuthInput
-        label="Password"
-        icon={Lock}
-        type="password"
-        placeholder="Enter your password"
-        value={watch("password")}
-        onChange={(e) => setValue("password", e.target.value)}
-        error={errors.password?.message}
-      />
-
-      {/* Remember */}
-      <div className="flex items-center justify-between">
-        <label className="flex cursor-pointer items-center gap-3">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-[#2B3164] bg-[#171734] text-[#6E57FF] focus:ring-[#6E57FF]"
-          />
-          <span className="text-sm text-slate-400">Remember me</span>
-        </label>
-
-        <Link
-          href="/forgot-password"
-          className="text-sm text-[#8B7DFF] transition hover:text-white"
-        >
-          Forgot Password?
-        </Link>
+        <p className="font-sans text-xs sm:text-sm text-[#A6ABC9]">
+          Authenticate to access your active neural trading protocols.
+        </p>
       </div>
 
-      {/* Login Button */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="group flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#6E57FF] to-[#8B7DFF] text-white font-medium shadow-xl shadow-[#6E57FF]/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-[#6E57FF]/60 disabled:opacity-60"
-      >
-        {isSubmitting ? (
-          "Signing In..."
-        ) : (
-          <>
-            Login
-            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
+        {/* Error Alert */}
+        {serverError && (
+          <div className="flex items-start gap-3 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+            <span>{serverError}</span>
+          </div>
         )}
-      </button>
 
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#2B3164]" />
+        {/* Email Field */}
+        <div className="space-y-2">
+          <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+            <input
+              {...register("email")}
+              type="email"
+              placeholder="satoshi@network.org"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+            />
+          </div>
+          {errors.email && (
+            <p className="font-mono text-[10px] text-red-400 mt-1">
+              {errors.email.message}
+            </p>
+          )}
         </div>
-        <div className="relative flex justify-center">
-          <span className="bg-[#171734] px-4 text-sm text-slate-500">or continue with</span>
+
+        {/* Password Field */}
+        <div className="space-y-2">
+          <label className="block font-mono text-xs uppercase tracking-wider text-[#D1D5FF]">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A608F]" />
+            <input
+              {...register("password")}
+              type="password"
+              placeholder="••••••••"
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#12163b]/70 border border-[#2d356b] text-white placeholder-[#5A608F] focus:outline-none focus:border-[#6E5CFF] focus:ring-1 focus:ring-[#6E5CFF] transition-all font-sans text-sm"
+            />
+          </div>
+          {errors.password && (
+            <p className="font-mono text-[10px] text-red-400 mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
-      </div>
 
-      {/* Google */}
-      <button
-        type="button"
-        className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-[#2B3164] bg-[#101226] text-white transition-all duration-300 hover:border-[#6E57FF] hover:bg-[#171734]"
-      >
-        <img
-          src="https://www.svgrepo.com/show/475656/google-color.svg"
-          className="h-5 w-5"
-          alt=""
-        />
-        Continue with Google
-      </button>
+        {/* Remember Me & Forgot Password */}
+        <div className="flex items-center justify-between font-sans text-xs">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-[#2d356b] bg-[#12163b] text-[#6E5CFF] focus:ring-[#6E5CFF]"
+            />
+            <span className="text-[#A6ABC9]">Remember me</span>
+          </label>
 
-      {/* Register */}
-      <div className="pt-2 text-center">
-        <span className="text-slate-400">Don't have an account?</span>
-        <Link href="/register" className="ml-2 font-medium text-[#8B7DFF] hover:text-white">
-          Create Account
-        </Link>
-      </div>
-    </motion.form>
+          <Link
+            href="/forgot-password"
+            className="text-[#8B94FF] hover:text-white font-mono transition-colors"
+          >
+            Forgot Password?
+          </Link>
+        </div>
+
+        {/* Login Button */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-4 rounded-xl bg-gradient-to-r from-[#5D72FF] to-[#6E5CFF] text-white font-mono text-xs font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(110,92,255,0.4)] hover:shadow-[0_0_30px_rgba(110,92,255,0.7)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 group/btn"
+        >
+          {isSubmitting ? (
+            <span>Signing In...</span>
+          ) : (
+            <>
+              <span>Authorize Login</span>
+              <ArrowRight className="w-4 h-4 text-white group-hover/btn:translate-x-1 transition-transform" />
+            </>
+          )}
+        </button>
+
+        {/* Divider */}
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[#2d356b]/60" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#0b0e26] px-3 font-mono text-[10px] text-[#A6ABC9]">
+              or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google Authentication */}
+        <button
+          type="button"
+          className="w-full py-3 rounded-xl border border-[#2d356b] bg-[#12163b]/50 text-white font-mono text-xs uppercase tracking-wider transition-all duration-300 hover:border-[#6E5CFF] hover:bg-[#12163b] flex items-center justify-center gap-3"
+        >
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            className="h-4 w-4"
+            alt="Google Logo"
+          />
+          <span>Google SSO</span>
+        </button>
+
+        {/* Register Redirect */}
+        <div className="pt-2 text-center font-sans text-xs">
+          <span className="text-[#A6ABC9]">Don't have an account?</span>
+          <Link
+            href="/register"
+            className="ml-2 font-mono font-medium text-[#8B94FF] hover:text-white transition-colors"
+          >
+            Create Account
+          </Link>
+        </div>
+      </form>
+    </motion.div>
   );
 }

@@ -2,20 +2,17 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X, Cpu, Sparkles, ArrowUpRight } from "lucide-react";
 
 export default function FrontNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState("Home");
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname(); // Tracks current active page route
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 20);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -23,11 +20,11 @@ export default function FrontNavbar() {
   }, []);
 
   const navLinks = [
-    { name: "Home", href: "#home" },
-    { name: "About Us", href: "#about" },
-    { name: "FAQ's", href: "#faq" },
-    { name: "Packages", href: "#packages" },
-    { name: "Contact Us", href: "#contact" },
+    { name: "Home", href: "/" },
+    { name: "About Us", href: "/about" },
+    { name: "FAQ's", href: "/faq" },
+    { name: "Packages", href: "/packages" },
+    { name: "Contact Us", href: "/contact" },
   ];
 
   return (
@@ -59,12 +56,11 @@ export default function FrontNavbar() {
           {/* 2. Center: Floating Nav Pills */}
           <div className="hidden md:flex items-center gap-1 px-4 py-1.5 rounded-full bg-[#12163b]/80 border border-[#2B3164]/50 backdrop-blur-md">
             {navLinks.map((link) => {
-              const isActive = activeLink === link.name;
+              const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  onClick={() => setActiveLink(link.name)}
                   className={`relative px-4 py-2 text-xs font-mono-tech uppercase tracking-wider transition-all duration-300 rounded-full ${
                     isActive
                       ? "text-white font-semibold bg-[#6E5CFF]/20 border border-[#6E5CFF]/40 shadow-[0_0_12px_rgba(110,92,255,0.3)]"
@@ -115,10 +111,7 @@ export default function FrontNavbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => {
-                  setActiveLink(link.name);
-                  setMobileMenuOpen(false);
-                }}
+                onClick={() => setMobileMenuOpen(false)}
                 className="font-tech text-sm tracking-wide text-[#A6ABC9] hover:text-white py-2.5 px-4 rounded-xl hover:bg-[#181B42] transition-all flex items-center justify-between group"
               >
                 <span>{link.name}</span>
