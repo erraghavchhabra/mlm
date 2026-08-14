@@ -15,6 +15,7 @@ import {
   Clock3,
   CheckCircle2,
   XCircle,
+  History,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -92,6 +93,11 @@ export const sidebarItems: SidebarItem[] = [
         icon: XCircle,
       },
     ],
+  },
+  {
+    title: "Transactions",
+    href: "/user/transactions",
+    icon: History,
   },
   {
     title: "Support",
