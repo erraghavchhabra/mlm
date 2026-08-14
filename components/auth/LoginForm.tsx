@@ -59,8 +59,10 @@ export default function LoginForm() {
       router.push("/user/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        if (err.response?.status === 401) {
-          setServerError(err.response.data?.message || "Invalid credentials");
+        if (err.response?.data?.message) {
+          setServerError(err.response.data.message);
+        } else if (err.response?.status === 401) {
+          setServerError("Invalid credentials");
         } else if (err.response?.status === 422) {
           const validationErrors = err.response.data?.errors;
           const firstError = validationErrors
