@@ -123,7 +123,7 @@ export default function RegisterForm({
         localStorage.setItem("user", JSON.stringify(user));
       }
 
-      router.push("/user/dashboard");
+      router.push("/login");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 400 || err.response?.status === 500) {
