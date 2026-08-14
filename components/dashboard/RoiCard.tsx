@@ -1,6 +1,12 @@
 import { ArrowUpRight, TrendingUp } from "lucide-react";
 
-export default function RoiCard() {
+interface RoiCardProps {
+  roi?: number;
+  leftBusiness?: number;
+  rightBusiness?: number;
+}
+
+export default function RoiCard({ roi = 0, leftBusiness = 0, rightBusiness = 0 }: RoiCardProps) {
   return (
     <div className="relative w-full min-h-[300px] overflow-hidden rounded-[36px] border border-[#2B3164]/80 bg-gradient-to-br from-[#171935] via-[#171734] to-[#20224A] p-6">
       {/* Glow Effects */}
@@ -12,7 +18,7 @@ export default function RoiCard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-[13px] uppercase tracking-[5px] text-[#8892C6]">
-            ROI
+            ROI BONUS
           </p>
 
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/5 bg-[#2A2D63]/70 backdrop-blur-2xl">
@@ -23,56 +29,39 @@ export default function RoiCard() {
         {/* Value */}
         <div className="mt-2">
           <h1 className="text-[34px] font-extralight leading-none tracking-[-0.06em] text-white xl:text-[56px]">
-            248%
+            ${roi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h1>
 
           <div className="mt-4 flex items-center gap-3">
             <span className="inline-flex items-center gap-1 rounded-full bg-[#8B94FF] px-3 py-1 text-xs font-semibold text-[#14162C]">
               <ArrowUpRight size={14} />
-              +18.6%
+              Active
             </span>
 
             <span className="text-sm text-[#98A2C9]">
-              Compared to last month
+              Direct return on package
             </span>
           </div>
         </div>
 
-        {/* Progress */}
+        {/* Progress / Stats */}
         <div className="mt-auto pt-8">
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="text-[#98A2C9]">Growth Progress</span>
-            <span className="font-medium text-white">248%</span>
-          </div>
-
-          <div className="h-3 overflow-hidden rounded-full bg-[#262A57]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#6E57FF] via-[#8B94FF] to-[#B8BEFF]"
-              style={{ width: "82%" }}
-            />
-          </div>
-
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-[#8892C6]">
-                Invested
+                Left Business
               </p>
-              <h4 className="mt-1 text-lg font-light text-white">$12.5K</h4>
+              <h4 className="mt-1 text-lg font-light text-white">
+                ${leftBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </h4>
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider text-[#8892C6]">
-                Profit
+                Right Business
               </p>
-              <h4 className="mt-1 text-lg font-light text-white">$31K</h4>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-wider text-[#8892C6]">
-                ROI
-              </p>
-              <h4 className="mt-1 text-lg font-light text-[#8B94FF]">
-                +248%
+              <h4 className="mt-1 text-lg font-light text-white">
+                ${rightBusiness.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h4>
             </div>
           </div>

@@ -1,11 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check, Share2, Link2 } from "lucide-react";
 
 export default function ReferralLinks() {
-  const leftLink = "https://yourdomain.com/ref/LEFT12345";
-  const rightLink = "https://yourdomain.com/ref/RIGHT12345";
+  const [username, setUsername] = useState("king2025");
+  const [origin, setOrigin] = useState("https://yourdomain.com");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const name = parsed.username || parsed.ucode || parsed.name || "";
+          if (name) setUsername(name);
+        } catch {}
+      }
+    }
+  }, []);
+
+  const leftLink = `${origin}/register/left/${username}`;
+  const rightLink = `${origin}/register/right/${username}`;
 
   const [copied, setCopied] = useState("");
 

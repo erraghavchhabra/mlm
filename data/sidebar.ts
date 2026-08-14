@@ -7,10 +7,14 @@ import {
   ShoppingBag,
   User,
   BanknoteArrowDown,
+  ArrowDownToLine,
   Network,
   LifeBuoy,
   TicketPlus,
   Tickets,
+  Clock3,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -59,24 +63,50 @@ export const sidebarItems: SidebarItem[] = [
     icon: Network,
   },
   {
-    title: "Withdraw",
-    href: "/user/withdraw",
-    icon: BanknoteArrowDown,
+    title: "Deposit",
+    href: "/user/deposit",
+    icon: ArrowDownToLine,
   },
-{
-  title: "Support",
-  icon: LifeBuoy,
-  children: [
-    {
-      title: "Tickets",
-      href: "/user/support/tickets",
-      icon: Tickets,
-    },
-    {
-      title: "Create Ticket",
-      href: "/user/support/create-ticket",
-      icon: TicketPlus,
-    },
-  ],
-}
+  {
+    title: "Withdraw",
+    icon: BanknoteArrowDown,
+    children: [
+      {
+        title: "Withdraw Request",
+        href: "/user/withdraw",
+        icon: BanknoteArrowDown,
+      },
+      {
+        title: "Pending Withdrawals",
+        href: "/user/withdraw/pending",
+        icon: Clock3,
+      },
+      {
+        title: "Completed Withdrawals",
+        href: "/user/withdraw/completed",
+        icon: CheckCircle2,
+      },
+      {
+        title: "Rejected Withdrawals",
+        href: "/user/withdraw/rejected",
+        icon: XCircle,
+      },
+    ],
+  },
+  {
+    title: "Support",
+    icon: LifeBuoy,
+    children: [
+      {
+        title: "Tickets",
+        href: "/user/support/tickets",
+        icon: Tickets,
+      },
+      {
+        title: "Create Ticket",
+        href: "/user/support/create-ticket",
+        icon: TicketPlus,
+      },
+    ],
+  }
 ];

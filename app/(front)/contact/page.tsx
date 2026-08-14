@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Sparkles, Send, CheckCircle2, Mail, ShieldCheck } from "lucide-react";
+import { Sparkles, Send, CheckCircle2, Mail, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import api from "@/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,6 +32,8 @@ export default function ContactSection() {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 1. Background Canvas Animation
   useEffect(() => {
@@ -147,9 +150,28 @@ export default function ContactSection() {
     return () => ctx.revert();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setError(null);
+    setIsLoading(true);
+    try {
+      await api.post("/contact", {
+        name: formData.name,
+        email: formData.email,
+        phone: `${formData.countryCode}${formData.phone}`,
+        message: formData.message,
+      });
+      setIsSubmitted(true);
+      setFormData({ name: "", email: "", countryCode: "+1", phone: "", message: "" });
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        "Something went wrong. Please try again.";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -326,13 +348,31 @@ export default function ContactSection() {
                     />
                   </div>
 
+                  {/* Error Message */}
+                  {error && (
+                    <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-sm text-red-300">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#5D72FF] to-[#6E5CFF] text-white font-mono text-sm font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(110,92,255,0.4)] hover:shadow-[0_0_30px_rgba(110,92,255,0.7)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+                    disabled={isLoading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#5D72FF] to-[#6E5CFF] text-white font-mono text-sm font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(110,92,255,0.4)] hover:shadow-[0_0_30px_rgba(110,92,255,0.7)] hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 flex items-center justify-center gap-2 group/btn disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
                   >
-                    <span>Send Message</span>
-                    <Send className="w-4 h-4 text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-0.5 transition-transform" />
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Message</span>
+                        <Send className="w-4 h-4 text-white group-hover/btn:translate-x-1 group-hover/btn:-translate-y-0.5 transition-transform" />
+                      </>
+                    )}
                   </button>
                 </form>
               )}

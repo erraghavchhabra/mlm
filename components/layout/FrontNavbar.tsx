@@ -3,21 +3,28 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Cpu, Sparkles, ArrowUpRight } from "lucide-react";
+import { Menu, X, Cpu, Sparkles, ArrowUpRight, LayoutDashboard } from "lucide-react";
 
 export default function FrontNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const pathname = usePathname(); // Tracks current active page route
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Check login state from localStorage token/user
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!(token || user));
+  }, [pathname]);
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -75,13 +82,23 @@ export default function FrontNavbar() {
 
           {/* 3. Right Side: Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login"
-              className="group font-tech relative inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white overflow-hidden bg-gradient-to-r from-[#5D72FF] via-[#6E5CFF] to-[#8B94FF] shadow-[0_0_20px_rgba(93,114,255,0.4)] hover:shadow-[0_0_28px_rgba(93,114,255,0.6)] hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <span>Sign In</span>
-              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/user/dashboard"
+                className="group font-tech relative inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white overflow-hidden bg-gradient-to-r from-[#5D72FF] via-[#6E5CFF] to-[#8B94FF] shadow-[0_0_20px_rgba(93,114,255,0.4)] hover:shadow-[0_0_28px_rgba(93,114,255,0.6)] hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="group font-tech relative inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-white overflow-hidden bg-gradient-to-r from-[#5D72FF] via-[#6E5CFF] to-[#8B94FF] shadow-[0_0_20px_rgba(93,114,255,0.4)] hover:shadow-[0_0_28px_rgba(93,114,255,0.6)] hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <span>Sign In</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Toggle Button */}
@@ -119,14 +136,25 @@ export default function FrontNavbar() {
               </Link>
             ))}
 
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="mt-3 w-full text-center py-3.5 rounded-xl font-tech text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#5D72FF] to-[#7B84FF] shadow-lg flex items-center justify-center gap-2"
-            >
-              Sign In
-              <ArrowUpRight className="w-4 h-4" />
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/user/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-3 w-full text-center py-3.5 rounded-xl font-tech text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#5D72FF] to-[#7B84FF] shadow-lg flex items-center justify-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="mt-3 w-full text-center py-3.5 rounded-xl font-tech text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-[#5D72FF] to-[#7B84FF] shadow-lg flex items-center justify-center gap-2"
+              >
+                Sign In
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            )}
           </div>
         )}
       </div>

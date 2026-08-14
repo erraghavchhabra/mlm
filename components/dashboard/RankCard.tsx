@@ -1,6 +1,10 @@
 import { Trophy } from 'lucide-react'
 
-export default function RankCard() {
+interface RankCardProps {
+  rank?: string;
+}
+
+export default function RankCard({ rank = "Unranked" }: RankCardProps) {
   return (
     <div className="w-full relative overflow-hidden rounded-[36px] border border-[#2B3164]/80 bg-gradient-to-br from-[#171935] via-[#171734] to-[#20224A] p-6 min-h-[300px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(114,132,255,.16),transparent_35%)]" />
@@ -18,7 +22,7 @@ export default function RankCard() {
 
         <div className="mt-5">
           <h2 className="text-[36px] font-extralight leading-none tracking-[-0.05em] text-white">
-            Unranked
+            {rank}
           </h2>
 
           <p className="mt-3 text-[#A6ABC9] text-lg">

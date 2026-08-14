@@ -3,8 +3,13 @@
 import { ArrowUpRight, Wallet } from 'lucide-react';
 import { useWallet } from '@/lib/useWallet';
 
-export default function BalanceCard() {
-  const { balance } = useWallet();
+interface BalanceCardProps {
+  balance?: number;
+}
+
+export default function BalanceCard({ balance: propBalance }: BalanceCardProps) {
+  const { balance: walletBalance } = useWallet();
+  const balance = propBalance !== undefined ? propBalance : walletBalance;
 
   return (
     <div className="w-full relative overflow-hidden rounded-[36px] border border-[#2B3164]/80 bg-gradient-to-br from-[#171935] via-[#171734] to-[#20224A] p-6 min-h-[300px]">

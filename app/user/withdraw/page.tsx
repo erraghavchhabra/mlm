@@ -15,6 +15,7 @@ import {
   Clock3,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import api from "@/lib/api";
 import { useWallet, updateLocalWalletBalance } from "@/lib/useWallet";
 
@@ -28,11 +29,33 @@ export interface WithdrawHistoryItem {
   created_at: string;
 }
 
-export default function WithdrawPage() {
+interface ProfileWallets {
+  wallet_address?: string;
+  wallet_address_bep?: string;
+  wallet_address_trc?: string;
+}
+
+const GATEWAY_NAMES: Record<string, string> = {
+  USDTRC20: "USDT (TRC-20)",
+  USDTBSC: "USDT (BEP-20)",
+  USDTSOL: "USDT (Solana)",
+};
+
+const getWalletForGateway = (gw: string, prof: ProfileWallets) => {
+  if (gw === "USDTRC20") return prof.wallet_address_trc || "";
+  if (gw === "USDTBSC") return prof.wallet_address_bep || "";
+  if (gw === "USDTSOL") return prof.wallet_address || "";
+  return "";
+};
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
+function WithdrawPageContent() {
   const { balance } = useWallet();
+  const [profile, setProfile] = useState<ProfileWallets>({});
 
   const [form, setForm] = useState({
-    gateway: "usdt",
+    gateway: "USDTRC20",
     walletAddress: "",
     amount: "",
   });
@@ -46,50 +69,90 @@ export default function WithdrawPage() {
     newBalance: number;
   } | null>(null);
 
-  // History state
-  const [history, setHistory] = useState<WithdrawHistoryItem[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
-
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      let res: any = null;
-      try {
-        res = await api.get("/withdraw/history");
-      } catch (e) {
-        res = await api.get("/wallet/history");
-      }
-
-      if (res?.data?.status && Array.isArray(res.data.data)) {
-        const items = res.data.data.map((item: any, idx: number) => ({
-          id: item.id || idx + 1,
-          txnid: item.txnid || item.transaction_id || item.trans_id || `#WD${item.id || idx + 1}`,
-          gateway: item.gateway || item.type || "USDT (TRC20)",
-          wallet_address: item.wallet_address || item.ref_from || "N/A",
-          amount: item.amount !== undefined ? item.amount : (item.dr || item.cr || 0),
-          status: item.status === 1 || item.status === "Approved" || item.status === "Completed" ? "Approved" : item.status === 0 || item.status === "Pending" ? "Pending" : "Rejected",
-          created_at: item.created_at ? new Date(item.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : new Date().toLocaleDateString(),
-        }));
-        setHistory(items);
-      }
-    } catch (err) {
-      console.error("Failed to fetch withdraw history:", err);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
+  // Email confirmation parameters handling
+  const searchParams = useSearchParams();
+  const [confirmationResult, setConfirmationResult] = useState<{
+    status: "success" | "error";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
-    fetchHistory();
+    const status = searchParams.get("status");
+    const message = searchParams.get("message");
+    if (status && message) {
+      setConfirmationResult({
+        status: status === "success" ? "success" : "error",
+        message: message,
+      });
+      // Clear query params from browser URL so reloading doesn't re-trigger the modal
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const stored = localStorage.getItem("user");
+        let initialProfile: ProfileWallets = {};
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          initialProfile = {
+            wallet_address: parsed.wallet_address || "",
+            wallet_address_bep: parsed.wallet_address_bep || "",
+            wallet_address_trc: parsed.wallet_address_trc || "",
+          };
+          setProfile(initialProfile);
+          setForm((prev) => ({
+            ...prev,
+            walletAddress: getWalletForGateway(prev.gateway, initialProfile),
+          }));
+        }
+        const res = await api.get("/profile");
+        if (res.data) {
+          const fetchedProfile = {
+            wallet_address: res.data.wallet_address || "",
+            wallet_address_bep: res.data.wallet_address_bep || "",
+            wallet_address_trc: res.data.wallet_address_trc || "",
+          };
+          setProfile(fetchedProfile);
+          setForm((prev) => {
+            let addr = prev.walletAddress;
+            if (!prev.walletAddress) {
+              addr = getWalletForGateway(prev.gateway, fetchedProfile);
+            }
+            return {
+              ...prev,
+              walletAddress: addr,
+            };
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load profile for withdraw:", err);
+      }
+    };
+    loadProfile();
   }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const name = e.target.name;
+    const value = e.target.value;
+
+    if (name === "gateway") {
+      const walletAddress = getWalletForGateway(value, profile);
+      setForm((prev) => ({
+        ...prev,
+        gateway: value,
+        walletAddress: walletAddress,
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
     setError(null);
   };
 
@@ -128,8 +191,6 @@ export default function WithdrawPage() {
     setLoading(true);
 
     try {
-      // POST endpoint: /withdraw/request matching Laravel function: withdrawRequest(Request $request)
-      // Payload keys expected by Laravel: { amount, bitcoin_address, gateway }
       const res = await api.post("/withdraw/request", {
         amount: withdrawAmount,
         bitcoin_address: form.walletAddress.trim(),
@@ -144,13 +205,16 @@ export default function WithdrawPage() {
 
         setSuccessDetails({
           amount: withdrawAmount,
-          gateway: form.gateway.toUpperCase(),
+          gateway: GATEWAY_NAMES[form.gateway] || form.gateway.toUpperCase(),
           txnId,
           newBalance: newBal,
         });
 
-        setForm({ gateway: "usdt", walletAddress: "", amount: "" });
-        fetchHistory();
+        setForm({
+          gateway: "USDTRC20",
+          walletAddress: getWalletForGateway("USDTRC20", profile),
+          amount: "",
+        });
       } else {
         setError(res?.data?.message || "Failed to submit withdrawal request.");
       }
@@ -166,19 +230,21 @@ export default function WithdrawPage() {
           setError("Error submitting withdrawal request.");
         }
       } else {
-        // Fallback for offline testing
         const newBal = Math.max(0, balance - withdrawAmount);
         updateLocalWalletBalance(newBal);
         const txnId = "WD" + Date.now();
 
         setSuccessDetails({
           amount: withdrawAmount,
-          gateway: form.gateway.toUpperCase(),
+          gateway: GATEWAY_NAMES[form.gateway] || form.gateway.toUpperCase(),
           txnId,
           newBalance: newBal,
         });
-        setForm({ gateway: "usdt", walletAddress: "", amount: "" });
-        fetchHistory();
+        setForm({
+          gateway: "USDTRC20",
+          walletAddress: getWalletForGateway("USDTRC20", profile),
+          amount: "",
+        });
       }
     } finally {
       setLoading(false);
@@ -192,6 +258,46 @@ export default function WithdrawPage() {
         <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-[#8B84FF]/10 blur-[120px]" />
         <div className="absolute right-0 bottom-0 h-80 w-80 rounded-full bg-[#5D58F8]/10 blur-[120px]" />
       </div>
+
+      {/* Email Confirmation Result Modal */}
+      {confirmationResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-[#8B84FF]/40 bg-[#141632] p-8 shadow-2xl">
+            <button
+              onClick={() => setConfirmationResult(null)}
+              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center">
+              <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${
+                confirmationResult.status === "success" ? "bg-emerald-500/20" : "bg-red-500/20"
+              }`}>
+                {confirmationResult.status === "success" ? (
+                  <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+                ) : (
+                  <XCircle className="h-10 w-10 text-red-400" />
+                )}
+              </div>
+
+              <h2 className="mt-5 text-2xl font-light text-white">
+                {confirmationResult.status === "success" ? "Verification Successful" : "Verification Failed"}
+              </h2>
+              <p className="mt-3 text-sm text-slate-300">
+                {confirmationResult.message}
+              </p>
+
+              <button
+                onClick={() => setConfirmationResult(null)}
+                className="mt-8 h-12 w-full rounded-2xl bg-gradient-to-r from-[#8B84FF] to-[#5D58F8] font-medium text-white shadow-lg transition hover:-translate-y-0.5"
+              >
+                Close & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Modal */}
       {successDetails && (
@@ -308,14 +414,14 @@ export default function WithdrawPage() {
                   onChange={handleChange}
                   className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-[#141632] pl-12 pr-14 text-white outline-none transition-all focus:border-[#8B84FF]"
                 >
-                  <option value="usdt" className="bg-[#141632]">
-                    USDT (TRC20)
+                  <option value="USDTRC20" className="bg-[#141632]">
+                    USDT (TRC-20)
                   </option>
-                  <option value="binance" className="bg-[#141632]">
-                    Binance (TRC20)
+                  <option value="USDTBSC" className="bg-[#141632]">
+                    USDT (BEP-20)
                   </option>
-                  <option value="tronlink" className="bg-[#141632]">
-                    TronLink
+                  <option value="USDTSOL" className="bg-[#141632]">
+                    USDT (Solana)
                   </option>
                 </select>
 
@@ -327,7 +433,7 @@ export default function WithdrawPage() {
             <div>
               <label className="mb-3 flex items-center gap-2 text-sm text-white/60">
                 <Wallet size={16} className="text-[#8B84FF]" />
-                Wallet Address (TRC20)
+                Wallet Address ({form.gateway === "USDTRC20" ? "TRC-20" : form.gateway === "USDTBSC" ? "BEP-20" : "Solana"})
               </label>
 
               <div className="relative">
@@ -337,11 +443,16 @@ export default function WithdrawPage() {
                   type="text"
                   name="walletAddress"
                   value={form.walletAddress}
-                  onChange={handleChange}
-                  placeholder="Enter your TRC20 wallet address"
-                  className="h-14 w-full rounded-2xl border border-white/10 bg-[#141632] pl-12 pr-5 text-white placeholder:text-white/25 outline-none transition-all focus:border-[#8B84FF]"
+                  readOnly
+                  placeholder={`No saved ${form.gateway === "USDTRC20" ? "TRC-20" : form.gateway === "USDTBSC" ? "BEP-20" : "Solana"} address found.`}
+                  className="h-14 w-full rounded-2xl border border-white/10 bg-[#141632]/50 pl-12 pr-5 text-slate-400 cursor-not-allowed outline-none select-all placeholder:text-red-400/80"
                 />
               </div>
+              {!form.walletAddress && (
+                <p className="mt-2 text-xs text-red-400">
+                  Please go to your <Link href="/user/profile" className="underline text-indigo-400 hover:text-indigo-300">Profile</Link> to set your {form.gateway === "USDTRC20" ? "TRC-20" : form.gateway === "USDTBSC" ? "BEP-20" : "Solana"} address.
+                </p>
+              )}
             </div>
 
             {/* Total Amount */}
@@ -409,72 +520,20 @@ export default function WithdrawPage() {
             </button>
           </form>
         </div>
-
-        {/* Withdrawal History Section */}
-        <div className="mt-12 rounded-[34px] border border-white/10 bg-white/5 p-4 lg:p-6 shadow-[0_35px_80px_rgba(0,0,0,.45)] backdrop-blur-3xl">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <History className="h-5 w-5 text-[#8B84FF]" />
-              <h2 className="text-xl font-medium text-white">Withdrawal History</h2>
-            </div>
-            <span className="text-xs text-white/50">{history.length} Requests</span>
-          </div>
-
-          {historyLoading ? (
-            <div className="flex h-40 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] text-slate-400">
-              <Loader2 className="mr-3 h-5 w-5 animate-spin text-[#8B84FF]" />
-              Loading history...
-            </div>
-          ) : history.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-              No withdrawal history found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-white/[0.03]">
-              <table className="min-w-full whitespace-nowrap text-left text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-widest text-white/50">
-                    <th className="px-6 py-4">Request ID</th>
-                    <th className="px-6 py-4">Gateway</th>
-                    <th className="px-6 py-4">Wallet Address</th>
-                    <th className="px-6 py-4">Amount</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((item, idx) => (
-                    <tr key={item.id || idx} className="border-b border-white/5 hover:bg-white/[0.05]">
-                      <td className="px-6 py-4 font-mono text-white">{item.txnid}</td>
-                      <td className="px-6 py-4 text-white/80">{item.gateway}</td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-300">{item.wallet_address}</td>
-                      <td className="px-6 py-4 font-semibold text-white">
-                        ${typeof item.amount === "number" ? item.amount.toFixed(2) : item.amount}
-                      </td>
-                      <td className="px-6 py-4">
-                        {item.status === "Approved" || item.status === "Completed" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                            <CheckCircle2 size={14} /> Approved
-                          </span>
-                        ) : item.status === "Pending" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400">
-                            <Clock3 size={14} /> Pending
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400">
-                            <XCircle size={14} /> Rejected
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-white/60">{item.created_at}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </div>
     </div>
+  );
+}
+
+export default function WithdrawPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-60 items-center justify-center text-slate-400">
+        <Loader2 className="mr-3 h-6 w-6 animate-spin text-[#8B84FF]" />
+        Loading page...
+      </div>
+    }>
+      <WithdrawPageContent />
+    </Suspense>
   );
 }

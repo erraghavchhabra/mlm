@@ -40,7 +40,7 @@ export default function DashboardPage() {
         />
 
         <StatCard
-          title="BINARY BONUS"
+          title="WEEKLY BONUS"
           value="$0.00"
           icon={DollarSign}
           change="0.0%"
