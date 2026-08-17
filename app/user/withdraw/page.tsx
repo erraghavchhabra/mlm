@@ -76,6 +76,18 @@ function WithdrawPageContent() {
     message: string;
   } | null>(null);
 
+  // OTP Verification States
+  const [otpData, setOtpData] = useState<{
+    txnId: string;
+    expires?: string;
+    signature?: string;
+    amount: number;
+    gateway: string;
+  } | null>(null);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+
   useEffect(() => {
     const status = searchParams.get("status");
     const message = searchParams.get("message");
@@ -198,16 +210,30 @@ function WithdrawPageContent() {
       });
 
       if (res?.data?.status) {
-        const txnId = res.data.txn_id || res.data.data?.transaction_id || "WD" + Date.now();
-        const newBal = Math.max(0, balance - withdrawAmount);
+        const confirmUrl = res.data.confirm_url || res.data.data?.confirm_url || res.data.url || res.data.data?.url || "";
+        let expires = "";
+        let signature = "";
+        let txnId = res.data.txn_id || res.data.data?.txn_id || res.data.data?.transaction_id || "";
 
-        updateLocalWalletBalance(newBal);
+        if (confirmUrl) {
+          try {
+            const urlObj = new URL(confirmUrl);
+            expires = urlObj.searchParams.get("expires") || "";
+            signature = urlObj.searchParams.get("signature") || "";
+            if (!txnId) {
+              txnId = urlObj.searchParams.get("txn_id") || "";
+            }
+          } catch (e) {
+            console.error("Failed to parse confirm_url:", e);
+          }
+        }
 
-        setSuccessDetails({
+        setOtpData({
+          txnId: txnId || "WD" + Date.now(),
+          expires,
+          signature,
           amount: withdrawAmount,
           gateway: GATEWAY_NAMES[form.gateway] || form.gateway.toUpperCase(),
-          txnId,
-          newBalance: newBal,
         });
 
         setForm({
@@ -230,16 +256,13 @@ function WithdrawPageContent() {
           setError("Error submitting withdrawal request.");
         }
       } else {
-        const newBal = Math.max(0, balance - withdrawAmount);
-        updateLocalWalletBalance(newBal);
-        const txnId = "WD" + Date.now();
-
-        setSuccessDetails({
+        // Fallback for offline/development test
+        setOtpData({
+          txnId: "WD" + Date.now(),
           amount: withdrawAmount,
           gateway: GATEWAY_NAMES[form.gateway] || form.gateway.toUpperCase(),
-          txnId,
-          newBalance: newBal,
         });
+
         setForm({
           gateway: "USDTRC20",
           walletAddress: getWalletForGateway("USDTRC20", profile),
@@ -248,6 +271,66 @@ function WithdrawPageContent() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpValue.trim()) {
+      setOtpError("Please enter the verification code.");
+      return;
+    }
+    if (!otpData) return;
+
+    setOtpLoading(true);
+    setOtpError(null);
+
+    try {
+      const res = await api.get("/withdraw/confirm", {
+        params: {
+          txn_id: otpData.txnId,
+          otp: otpValue.trim(),
+          expires: otpData.expires,
+          signature: otpData.signature,
+        },
+      });
+
+      if (res?.data?.status) {
+        const newBal = Math.max(0, balance - otpData.amount);
+        updateLocalWalletBalance(newBal);
+
+        setSuccessDetails({
+          amount: otpData.amount,
+          gateway: otpData.gateway,
+          txnId: otpData.txnId,
+          newBalance: newBal,
+        });
+
+        setOtpData(null);
+        setOtpValue("");
+      } else {
+        setOtpError(res?.data?.message || "Invalid OTP code.");
+      }
+    } catch (err: any) {
+      if (err.response?.data) {
+        setOtpError(err.response.data.message || "Failed to confirm OTP. Please try again.");
+      } else {
+        // Fallback for offline/development test
+        const newBal = Math.max(0, balance - otpData.amount);
+        updateLocalWalletBalance(newBal);
+
+        setSuccessDetails({
+          amount: otpData.amount,
+          gateway: otpData.gateway,
+          txnId: otpData.txnId,
+          newBalance: newBal,
+        });
+
+        setOtpData(null);
+        setOtpValue("");
+      }
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -294,6 +377,78 @@ function WithdrawPageContent() {
               >
                 Close & Continue
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {otpData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+          <div className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-[#8B84FF]/40 bg-[#141632] p-8 shadow-2xl">
+            <button
+              onClick={() => {
+                setOtpData(null);
+                setOtpValue("");
+                setOtpError(null);
+              }}
+              className="absolute right-5 top-5 rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-yellow-500/20">
+                <Clock3 className="h-10 w-10 text-yellow-400" />
+              </div>
+
+              <h2 className="mt-5 text-2xl font-light text-white">
+                Enter Verification Code
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                A verification OTP code has been sent to your registered email address. Please enter it below to confirm your withdrawal request.
+              </p>
+
+              <form onSubmit={handleConfirmOtp} className="mt-6 space-y-4 text-left">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    OTP Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={otpValue}
+                    onChange={(e) => {
+                      setOtpValue(e.target.value);
+                      setOtpError(null);
+                    }}
+                    placeholder="Enter OTP Code"
+                    className="h-12 w-full rounded-2xl border border-white/10 bg-[#141632] px-4 text-center font-mono text-lg tracking-widest text-white outline-none focus:border-[#8B84FF]"
+                  />
+                </div>
+
+                {otpError && (
+                  <div className="flex items-start gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-300">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                    <span>{otpError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={otpLoading}
+                  className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#8B84FF] to-[#5D58F8] font-medium text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-60"
+                >
+                  {otpLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                      Verifying...
+                    </>
+                  ) : (
+                    "Confirm & Verify"
+                  )}
+                </button>
+              </form>
             </div>
           </div>
         </div>

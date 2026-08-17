@@ -191,7 +191,7 @@ export default function LoginForm() {
           )}
         </button>
 
-        {/* Divider */}
+        {/* Divider (Disabled)
         <div className="relative py-2">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-[#2d356b]/60" />
@@ -202,8 +202,9 @@ export default function LoginForm() {
             </span>
           </div>
         </div>
+        */}
 
-        {/* Google Authentication */}
+        {/* Google Authentication (Disabled)
         <button
           type="button"
           className="w-full py-3 rounded-xl border border-[#2d356b] bg-[#12163b]/50 text-white font-mono text-xs uppercase tracking-wider transition-all duration-300 hover:border-[#6E5CFF] hover:bg-[#12163b] flex items-center justify-center gap-3"
@@ -215,6 +216,7 @@ export default function LoginForm() {
           />
           <span>Google SSO</span>
         </button>
+        */}
 
         {/* Register Redirect */}
         <div className="pt-2 text-center font-sans text-xs">

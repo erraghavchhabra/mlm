@@ -78,19 +78,9 @@ export const sidebarItems: SidebarItem[] = [
         icon: BanknoteArrowDown,
       },
       {
-        title: "Pending Withdrawals",
-        href: "/user/withdraw/pending",
-        icon: Clock3,
-      },
-      {
-        title: "Completed Withdrawals",
-        href: "/user/withdraw/completed",
-        icon: CheckCircle2,
-      },
-      {
-        title: "Rejected Withdrawals",
-        href: "/user/withdraw/rejected",
-        icon: XCircle,
+        title: "Withdrawal Statement",
+        href: "/user/withdraw/statement",
+        icon: History,
       },
     ],
   },

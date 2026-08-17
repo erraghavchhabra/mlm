@@ -108,7 +108,7 @@ export default function DashboardPage() {
         />
 
         <StatCard
-          title="DIRECT REFERRALS"
+          title="DIRECT BONUS"
           value={String(liveData.direct_referral)}
           icon={Users}
           change="Registered"

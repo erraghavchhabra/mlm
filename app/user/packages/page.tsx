@@ -716,7 +716,7 @@ export default function BuyPackagePage() {
                     )}
                   </button>
 
-                  {/* Option 2: NowPayments Crypto */}
+                  {/* Option 2: NowPayments Crypto (Disabled)
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("nowpayments")}
@@ -745,8 +745,9 @@ export default function BuyPackagePage() {
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-[#F7931A]" />
                     )}
                   </button>
+                  */}
 
-                  {/* Coin Sub-selector for NowPayments */}
+                  {/* Coin Sub-selector for NowPayments (Disabled)
                   {paymentMethod === "nowpayments" && (
                     <div className="mt-1 p-3 rounded-2xl border border-[#F7931A]/30 bg-[#F7931A]/5 space-y-2">
                       <div className="text-[11px] font-semibold text-[#F7931A] uppercase tracking-wider flex items-center justify-between">
@@ -772,8 +773,9 @@ export default function BuyPackagePage() {
                       </div>
                     </div>
                   )}
+                  */}
 
-                  {/* Option 3: Other Payment Method */}
+                  {/* Option 3: Other Payment Method (Disabled)
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("gateway")}
@@ -794,6 +796,7 @@ export default function BuyPackagePage() {
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-[#8D98FF]" />
                     )}
                   </button>
+                  */}
                 </div>
               </div>
 
