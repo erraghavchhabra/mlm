@@ -135,17 +135,17 @@ lg:shrink-0
         {/* ================= Logo ================= */}
 
         <div className="relative z-10 px-8 pt-9 pb-8">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-[36px] font-light tracking-tight text-white">
-                LOGO
-              </h2>
-
-              <p className="mt-1 text-[11px] uppercase tracking-[5px] text-white/45">
-                User Suite
-              </p>
+          <Link href="/" className="inline-block">
+            <div className="relative h-10 w-56">
+              <Image
+                src="/assets/img/logo.png"
+                alt="Logo"
+                fill
+                priority
+                className="object-contain object-left"
+              />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* ================= Navigation ================= */}
@@ -163,7 +163,7 @@ lg:shrink-0
 
                 const isActive = item.href
                   ? pathname === item.href ||
-                    pathname.startsWith(item.href + "/")
+                  pathname.startsWith(item.href + "/")
                   : false;
 
                 // ===========================
@@ -177,19 +177,17 @@ lg:shrink-0
                     <div key={item.title}>
                       <button
                         onClick={() => setOpenMenu(isOpen ? null : item.title)}
-                        className={`group flex w-full items-center justify-between rounded-full px-2.5 py-2.5 transition-all duration-300 ${
-                          isParentActive
-                            ? "bg-white text-[#5E5AF8] shadow-[0_15px_35px_rgba(255,255,255,.12)]"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
-                        }`}
+                        className={`group flex w-full items-center justify-between rounded-full px-2.5 py-2.5 transition-all duration-300 ${isParentActive
+                          ? "bg-white text-[#5E5AF8] shadow-[0_15px_35px_rgba(255,255,255,.12)]"
+                          : "text-white/70 hover:bg-white/5 hover:text-white"
+                          }`}
                       >
                         <div className="flex items-center gap-4">
                           <div
-                            className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${
-                              isParentActive
-                                ? "bg-[#F3F2FF]"
-                                : "bg-white/5 group-hover:bg-white/10"
-                            }`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isParentActive
+                              ? "bg-[#F3F2FF]"
+                              : "bg-white/5 group-hover:bg-white/10"
+                              }`}
                           >
                             <Icon size={16} />
                           </div>
@@ -243,11 +241,10 @@ lg:shrink-0
                                   <Link
                                     key={child.title}
                                     href={child.href!}
-                                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
-                                      childActive
-                                        ? "text-[#8B84FF]"
-                                        : "text-white/55 hover:text-white"
-                                    }`}
+                                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${childActive
+                                      ? "text-[#8B84FF]"
+                                      : "text-white/55 hover:text-white"
+                                      }`}
                                   >
                                     <ChildIcon size={16} />
                                     {child.title}
@@ -275,18 +272,16 @@ lg:shrink-0
                       transition={{
                         duration: 0.2,
                       }}
-                      className={`group flex items-center gap-4 rounded-full px-2.5 py-2.5 transition-all duration-300 ${
-                        isActive
-                          ? "bg-white text-[#5D58F8] shadow-[0_18px_40px_rgba(255,255,255,.15)]"
-                          : "text-white/70 hover:bg-white/5 hover:text-white"
-                      }`}
+                      className={`group flex items-center gap-4 rounded-full px-2.5 py-2.5 transition-all duration-300 ${isActive
+                        ? "bg-white text-[#5D58F8] shadow-[0_18px_40px_rgba(255,255,255,.15)]"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                        }`}
                     >
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${
-                          isActive
-                            ? "bg-[#F3F2FF]"
-                            : "bg-white/5 group-hover:bg-white/10"
-                        }`}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isActive
+                          ? "bg-[#F3F2FF]"
+                          : "bg-white/5 group-hover:bg-white/10"
+                          }`}
                       >
                         <Icon size={16} />
                       </div>

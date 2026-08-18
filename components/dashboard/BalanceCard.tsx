@@ -33,17 +33,6 @@ export default function BalanceCard({ balance: propBalance }: BalanceCardProps) 
           <h1 className="text-[34px] xl:text-[56px] font-extralight leading-none tracking-[-0.06em] text-white">
             ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h1>
-
-           <div className="mt-4 flex items-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#8B94FF] px-3 py-1 text-xs font-semibold text-[#14162C]">
-              <ArrowUpRight size={14} />
-              +12.4%
-            </span>
-
-            <span className="text-sm text-[#98A2C9]">
-              Compared to last week
-            </span>
-          </div>
         </div>
 
         {/* Chart */}

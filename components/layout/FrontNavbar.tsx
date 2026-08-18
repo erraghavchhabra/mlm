@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, Cpu, Sparkles, ArrowUpRight, LayoutDashboard } from "lucide-react";
+import Image from "next/image";
 
 export default function FrontNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,27 +37,22 @@ export default function FrontNavbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? "pt-2 px-4 sm:px-8" : "pt-4 px-4 sm:px-8"
-      }`}
+      className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${isScrolled ? "pt-2 px-4 sm:px-8" : "pt-4 px-4 sm:px-8"
+        }`}
     >
       {/* Container constrained to max 1400px */}
       <div className="max-w-[1400px] mx-auto">
         <nav className="h-20 px-6 flex items-center justify-between rounded-2xl bg-[#0b0e26]/60 backdrop-blur-xl border border-[#2d356b]/50 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
           {/* 1. Left Side: Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#6E5CFF] via-[#5D72FF] to-[#3B488D] p-[1px] shadow-[0_0_20px_rgba(110,92,255,0.4)] transition-transform duration-300 group-hover:scale-105">
-              <div className="w-full h-full bg-[#0b0e26] rounded-[11px] flex items-center justify-center">
-                <Cpu className="h-5 w-5 text-[#8B94FF] group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-tech text-lg font-bold tracking-wider text-white flex items-center gap-1">
-                AURA<span className="text-[#8B94FF]">.AI</span>
-              </span>
-              <span className="font-mono-tech text-[9px] text-[#6E5CFF] tracking-widest uppercase -mt-1">
-                v2.0 Active
-              </span>
+          <Link href="/" className="flex items-center group">
+            <div className="relative h-16 w-36 sm:w-60 transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/assets/img/logo.png"
+                alt="Logo"
+                fill
+                priority
+                className="object-contain object-left"
+              />
             </div>
           </Link>
 
@@ -68,11 +64,10 @@ export default function FrontNavbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`relative px-4 py-2 text-xs font-mono-tech uppercase tracking-wider transition-all duration-300 rounded-full ${
-                    isActive
-                      ? "text-white font-semibold bg-[#6E5CFF]/20 border border-[#6E5CFF]/40 shadow-[0_0_12px_rgba(110,92,255,0.3)]"
-                      : "text-[#A6ABC9] hover:text-white hover:bg-white/5"
-                  }`}
+                  className={`relative px-4 py-2 text-xs font-mono-tech uppercase tracking-wider transition-all duration-300 rounded-full ${isActive
+                    ? "text-white font-semibold bg-[#6E5CFF]/20 border border-[#6E5CFF]/40 shadow-[0_0_12px_rgba(110,92,255,0.3)]"
+                    : "text-[#A6ABC9] hover:text-white hover:bg-white/5"
+                    }`}
                 >
                   {link.name}
                 </Link>

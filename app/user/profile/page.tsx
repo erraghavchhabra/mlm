@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeNetwork, setActiveNetwork] = useState<"erc" | "bep" | "trc">("erc");
 
   const [form, setForm] = useState({
     full_name: "",
@@ -221,52 +222,100 @@ export default function ProfilePage() {
                     className={inputCls}
                   />
                 </div>
+              </div>
 
-                {/* Wallet Address (ERC-20 / default) */}
+              {/* Section Divider */}
+              <div className="my-8 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+              {/* Wallet Addresses Section Header with Switcher Tabs */}
+              <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <label className={labelCls}>
-                    <Wallet size={16} className="text-[#8B84FF]" />
-                    Wallet Address (ERC-20)
-                  </label>
-                  <input
-                    name="wallet_address"
-                    value={form.wallet_address}
-                    onChange={handleChange}
-                    placeholder="ERC-20 Wallet Address"
-                    className={inputCls}
-                  />
+                  <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                    <Wallet size={20} className="text-[#8B84FF]" />
+                    Wallet Addresses
+                  </h3>
+                  <p className="mt-1 text-sm text-white/55">
+                    Select a network tab to view and update your deposit/withdrawal address.
+                  </p>
                 </div>
 
-                {/* Wallet Address BEP-20 */}
-                <div>
-                  <label className={labelCls}>
-                    <Wallet size={16} className="text-[#8B84FF]" />
-                    Wallet Address (BEP-20)
-                  </label>
-                  <input
-                    name="wallet_address_bep"
-                    value={form.wallet_address_bep}
-                    onChange={handleChange}
-                    placeholder="BEP-20 Wallet Address"
-                    className={inputCls}
-                  />
+                {/* Switcher Buttons */}
+                <div className="flex bg-white/5 border border-white/10 p-1 rounded-2xl self-start md:self-auto">
+                  {(["erc", "bep", "trc"] as const).map((net) => (
+                    <button
+                      key={net}
+                      type="button"
+                      onClick={() => setActiveNetwork(net)}
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
+                        activeNetwork === net
+                          ? "bg-gradient-to-r from-[#8B84FF] to-[#5D58F8] text-white shadow-md shadow-indigo-500/25"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {net === "erc" ? "ERC-20" : net === "bep" ? "BEP-20" : "TRC-20"}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                {/* Wallet Address TRC-20 */}
-                <div>
-                  <label className={labelCls}>
-                    <Wallet size={16} className="text-[#8B84FF]" />
-                    Wallet Address (TRC-20)
-                  </label>
-                  <input
-                    name="wallet_address_trc"
-                    value={form.wallet_address_trc}
-                    onChange={handleChange}
-                    placeholder="TRC-20 Wallet Address"
-                    className={inputCls}
-                  />
-                </div>
+              {/* Active Network Input Form Section */}
+              <div className="rounded-2xl border border-white/5 bg-[#141632]/30 p-6 mb-8">
+                {activeNetwork === "erc" && (
+                  <div>
+                    <label className={labelCls}>
+                      <Wallet size={16} className="text-[#8B84FF]" />
+                      Ethereum (ERC-20) Wallet Address
+                    </label>
+                    <input
+                      name="wallet_address"
+                      value={form.wallet_address}
+                      onChange={handleChange}
+                      placeholder="Enter ERC-20 Address (0x...)"
+                      className={inputCls}
+                    />
+                    <p className="mt-2 text-xs text-white/35">
+                      Ensure your wallet address supports the Ethereum (ERC-20) network.
+                    </p>
+                  </div>
+                )}
 
+                {activeNetwork === "bep" && (
+                  <div>
+                    <label className={labelCls}>
+                      <Wallet size={16} className="text-[#8B84FF]" />
+                      BNB Chain (BEP-20) Wallet Address
+                    </label>
+                    <input
+                      name="wallet_address_bep"
+                      value={form.wallet_address_bep}
+                      onChange={handleChange}
+                      placeholder="Enter BEP-20 Address (0x...)"
+                      className={inputCls}
+                    />
+                    <p className="mt-2 text-xs text-white/35">
+                      Ensure your wallet address supports the Binance Smart Chain (BEP-20) network.
+                    </p>
+                  </div>
+                )}
+
+                {activeNetwork === "trc" && (
+                  <div>
+                    <label className={labelCls}>
+                      <Wallet size={16} className="text-[#8B84FF]" />
+                      TRON (TRC-20) Wallet Address
+                    </label>
+                    <input
+                      name="wallet_address_trc"
+                      value={form.wallet_address_trc}
+                      onChange={handleChange}
+                      placeholder="Enter TRC-20 Address (T...)"
+                      className={inputCls}
+                    />
+                    <p className="mt-2 text-xs text-white/35">
+                      Ensure your wallet address supports the TRON (TRC-20) network.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Bottom Divider */}

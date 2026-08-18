@@ -8,9 +8,6 @@ import {
   XCircle,
   Loader2,
   Search,
-  Wallet,
-  ArrowUpRight,
-  TrendingUp,
 } from "lucide-react";
 import api from "@/lib/api";
 
@@ -82,19 +79,6 @@ function StatementPageContent() {
     fetchHistory();
   }, []);
 
-  // Compute stats
-  const totalApproved = history
-    .filter((item) => item.status_code === 1)
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  const totalPending = history
-    .filter((item) => item.status_code === 0)
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  const totalRejected = history
-    .filter((item) => item.status_code === 2)
-    .reduce((sum, item) => sum + item.amount, 0);
-
   // Filter items
   const filteredHistory = history.filter((item) => {
     const matchesSearch =
@@ -130,91 +114,14 @@ function StatementPageContent() {
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Card 1: Total Transacted */}
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white/60">Total Requests</span>
-              <div className="rounded-xl bg-[#8B84FF]/20 p-2.5 text-[#8B84FF]">
-                <History size={20} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-semibold text-white">{history.length}</h3>
-              <p className="mt-1 text-xs text-white/40">Initiated transactions</p>
-            </div>
-          </div>
-
-          {/* Card 2: Total Completed */}
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white/60">Total Approved</span>
-              <div className="rounded-xl bg-emerald-500/20 p-2.5 text-emerald-400">
-                <CheckCircle2 size={20} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-semibold text-emerald-400">
-                ${totalApproved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-              <p className="mt-1 text-xs text-white/40">Processed & completed</p>
-            </div>
-          </div>
-
-          {/* Card 3: Total Pending */}
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white/60">Total Pending</span>
-              <div className="rounded-xl bg-yellow-500/20 p-2.5 text-yellow-400">
-                <Clock3 size={20} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-semibold text-yellow-400">
-                ${totalPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-              <p className="mt-1 text-xs text-white/40">Awaiting admin action</p>
-            </div>
-          </div>
-
-          {/* Card 4: Total Rejected */}
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white/60">Total Rejected</span>
-              <div className="rounded-xl bg-red-500/20 p-2.5 text-red-400">
-                <XCircle size={20} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="text-2xl font-semibold text-red-400">
-                ${totalRejected.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-              <p className="mt-1 text-xs text-white/40">Cancelled or invalid</p>
-            </div>
-          </div>
-        </div>
-
         {/* Withdrawal History Section */}
         <div className="rounded-[34px] border border-white/10 bg-white/5 p-4 lg:p-6 shadow-[0_35px_80px_rgba(0,0,0,.45)] backdrop-blur-3xl space-y-6">
           
-          {/* Controls: Search & Filters */}
+          {/* Controls: Search */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2">
-              {(["All", "Pending", "Approved", "Rejected"] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setStatusFilter(filter)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    statusFilter === filter
-                      ? "bg-gradient-to-r from-[#8B84FF] to-[#5D58F8] text-white shadow-md shadow-indigo-500/20"
-                      : "bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10"
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+              <History className="h-5 w-5 text-[#8B84FF]" />
+              <h2 className="text-xl font-medium text-white">All Statements</h2>
             </div>
 
             {/* Search Input */}
